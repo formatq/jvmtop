@@ -57,7 +57,7 @@ import com.jvmtop.view.VMProfileView;
 public class JvmTop
 {
 
-  public static final String                         VERSION                 = "0.8.0 alpha";
+  public static final String                         VERSION                 = "0.8.1 alpha";
 
   private Double                                     delay_                  = 1.0;
 
@@ -106,6 +106,9 @@ public class JvmTop
     parser
         .acceptsAll(Arrays.asList(new String[] { "w", "width" }),
             "Width in columns for the console display").withRequiredArg().ofType(Integer.class);
+    parser
+            .acceptsAll(Arrays.asList(new String[] { "f", "stateFilter" }),
+                    "Filter by state name").withRequiredArg().ofType(String.class);
 
     parser
         .accepts("threadnamewidth",
@@ -137,6 +140,8 @@ public class JvmTop
     Integer pid = null;
 
     Integer width = null;
+
+    String stateFilter = null;
 
     double delay = 1.0;
 
@@ -178,6 +183,11 @@ public class JvmTop
     if (a.hasArgument("width"))
     {
       width = (Integer) a.valueOf("width");
+    }
+
+    if (a.hasArgument("stateFilter"))
+    {
+      stateFilter = (String) a.valueOf("stateFilter");
     }
 
     if (a.hasArgument("threadlimit"))
@@ -223,7 +233,7 @@ public class JvmTop
         }
         else
         {
-          VMDetailView vmDetailView = new VMDetailView(pid, width);
+          VMDetailView vmDetailView = new VMDetailView(pid, width, stateFilter);
           vmDetailView.setDisplayedThreadLimit(threadLimitEnabled);
           if (threadlimit != null)
           {

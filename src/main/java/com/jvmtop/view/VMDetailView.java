@@ -48,6 +48,8 @@ public class VMDetailView extends AbstractConsoleView
 
   private int             numberOfDisplayedThreads_ = 10;
 
+  private String          stateFilter_ = null;
+
   private int             threadNameDisplayWidth_   = 30;
 
   private boolean         displayedThreadLimit_     = true;
@@ -55,12 +57,13 @@ public class VMDetailView extends AbstractConsoleView
   //TODO: refactor
   private Map<Long, Long> previousThreadCPUMillis   = new HashMap<Long, Long>();
 
-  public VMDetailView(int vmid, Integer width) throws Exception
+  public VMDetailView(int vmid, Integer width, String stateFilter) throws Exception
   {
     super(width);
     LocalVirtualMachine localVirtualMachine = LocalVirtualMachine
         .getLocalVirtualMachine(vmid);
     vmInfo_ = VMInfo.processNewVM(localVirtualMachine, vmid);
+    stateFilter_ = stateFilter;
   }
 
   public boolean isSortByTotalCPU()
@@ -200,17 +203,33 @@ public class VMDetailView extends AbstractConsoleView
         }
         if (info != null)
         {
-          System.out.printf(
-              " %6d %-" + threadNameDisplayWidth_
-                  + "s  %13s %5.2f%%    %5.2f%% %5s %n",
-              tid,
-              leftStr(info.getThreadName(), threadNameDisplayWidth_),
-              info.getThreadState(),
-              getThreadCPUUtilization(cpuTimeMap.get(tid),
-                  vmInfo_.getDeltaUptime()),
-              getThreadCPUUtilization(vmInfo_.getThreadMXBean()
-                  .getThreadCpuTime(tid), vmInfo_.getProxyClient()
-                  .getProcessCpuTime(), 1), getBlockedThread(info));
+          if(stateFilter_!=null) {
+            if(stateFilter_.toLowerCase().equals(info.getThreadState().toString().toLowerCase())) {
+              System.out.printf(
+                      " %6d %-" + threadNameDisplayWidth_
+                              + "s  %13s %5.2f%%    %5.2f%% %5s %n",
+                      tid,
+                      leftStr(info.getThreadName(), threadNameDisplayWidth_),
+                      info.getThreadState(),
+                      getThreadCPUUtilization(cpuTimeMap.get(tid),
+                              vmInfo_.getDeltaUptime()),
+                      getThreadCPUUtilization(vmInfo_.getThreadMXBean()
+                              .getThreadCpuTime(tid), vmInfo_.getProxyClient()
+                              .getProcessCpuTime(), 1), getBlockedThread(info));
+            }
+          } else {
+            System.out.printf(
+                    " %6d %-" + threadNameDisplayWidth_
+                            + "s  %13s %5.2f%%    %5.2f%% %5s %n",
+                    tid,
+                    leftStr(info.getThreadName(), threadNameDisplayWidth_),
+                    info.getThreadState(),
+                    getThreadCPUUtilization(cpuTimeMap.get(tid),
+                            vmInfo_.getDeltaUptime()),
+                    getThreadCPUUtilization(vmInfo_.getThreadMXBean()
+                            .getThreadCpuTime(tid), vmInfo_.getProxyClient()
+                            .getProcessCpuTime(), 1), getBlockedThread(info));
+          }
         }
       }
       if (newThreadCPUMillis.size() >= numberOfDisplayedThreads_
@@ -235,7 +254,7 @@ public class VMDetailView extends AbstractConsoleView
   {
     if (info.getLockOwnerId() >= 0)
     {
-      return "" + info.getLockOwnerId();
+      return "" + info.getLockOwnerName() + "["+info.getLockOwnerId()+"]";
     }
     else
     {
